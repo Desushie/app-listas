@@ -1,358 +1,426 @@
-from flet import * #Luego de haber instalado el módulo Flet, se importa aquí. Esta importación permite utilizar todos sus recursos (*).
-import flet as ft #Importa de Flet...
+
+# Este código crea una aplicación gráfica de tareas usando la biblioteca Flet
+import flet as ft # Se importa la biblioteca Flet, que permite construir aplicaciones multiplataforma con interfaces gráficas modernas
 
 
-#Comando para ejecutar en la terminal y que el proyecto se actualice en tiempo real: flet -r app.py
+# Esta es la función principal de la aplicación. Configura la ventana y contiene todas las funciones necesarias para gestionar la interfaz y las funcionalidades
+def principal(pagina: ft.Page):
 
-#Función principal que abordará la página.
-def main(page: Page): #Función llamada 'main' con parámetro de tipo 'Page' que es una nube del módulo Flet. Esto se necesita para iniciar la aplicación.
-    
-    #Definir ancho y altura de la ventana
-    page.window_width = 450  #Ancho de la ventana
-    page.window_height = 880  #Altura de la ventana
-    page.title = "Lista de Tareas"  #Título de la ventana
+    # Configura las propiedades básicas de la ventana:
+    pagina.window.width = 410 # Tamaño: 410 px de ancho
+    pagina.window.height = 820 # Tamaño: 820 px de alto
+    pagina.window.center() # Posición: Centra la ventana en la pantalla
+    pagina.bgcolor = ft.Colors.WHITE # Color de fondo: Blanco
 
-    #Se crean varibles para asignar los valores de colores.
-    BG = '#041955' #Color de fondo a utilizar.
-    FWG = '#97b4ff' #Primer plano.
-    FG = '#3450a1' #Ni idea.
-    PINK = '#eb06ff' #Linea rosa.
+    # Crea la estructura de la imagen de perfil: Genera un elemento visual que representa el perfil del usuario con un diseño circular y gradiente
+    def crear_imagen_perfil():
+        return ft.Stack( # Permite apilar elementos (contenedores) uno encima del otro; Aquí se usa para superponer varias capas circulares con gradientes
+            controls=[ 
+                ft.Container(
+                    gradient=ft.SweepGradient( # Gradiente circular: Para decorar el borde del avatar, aplica un gradiente circular al borde exterior del avatar con dos colores: #EEEEEE y #eb06ff
+                        center=ft.alignment.center,
+                        start_angle=0.0,
+                        end_angle=3,
+                        stops=[0.5, 0.5],
+                        colors=['#EEEEEE', '#eb06ff'], # Colores para el circulo del perfil
+                    ),
+                    width=100,
+                    height=100,
+                    border_radius=50,
+                    content=ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        controls=[ 
+                            ft.Container( # Se crean varios círculos, cada uno más pequeño que el anterior
+                                padding=ft.padding.all(5),
+                                bgcolor="#2D033B",
+                                width=90,
+                                height=90,
+                                border_radius=50,
+                                content=ft.Container(
+                                    bgcolor="#3450A1", # Color opaco de la foto
+                                    height=80,
+                                    width=80,
+                                    border_radius=40,
+                                    content=ft.Image( # Avatar circular: Usa ft.CircleAvatar para cargar una imagen desde una URL
+                                        opacity=0.8, # Ajusta la transparencia de la imagen (0.8 es ligeramente translúcida)
+                                        src="https://picsum.photos/200/300",
+                                        fit=ft.ImageFit.COVER
+                                    ),
+                                ),
+                            ),
+                        ],
+                    ),
+                ),
+            ],
+        )
 
-    #Estilos aplicados para la foto de perfil.
-    circle = Stack(
-    controls=[
-      Container(
-        width=100,
-        height=100,
-        border_radius=50,
-        bgcolor='white12'
-        ),
-Container(
-    gradient=SweepGradient(
-        center=alignment.center,
-        start_angle=0.0,
-        end_angle=3,
-        stops=[0.5, 0.5],
-        colors=['#00000000', PINK],
-    ),
-    width=100,
-    height=100,
-    border_radius=50,
-    content=Row(
-        alignment='center',
-        controls=[
-            Container(
-                padding=padding.all(5),
-                bgcolor=BG,
-                width=90,
-                height=90,
-                border_radius=50,
-                content=Container(
-                    bgcolor=FG,
-                    height=80,
-                    width=80,
-                    border_radius=40,
-                    content=CircleAvatar(
-                        opacity=0.8,
-                        foreground_image_src="https://picsum.photos/200/300"
+    # Categorías disponibles
+    categorias = { # Define un diccionario para almacenar las tareas agrupadas en tres categorías:
+        "Estudio": [],
+        "Trabajo": [],
+        "Hogar": [],
+    }
+
+    # Función para agregar tareas a una categoría
+    def agregar_tarea(categoria, tarea): # Permite añadir tareas a una categoría específica:
+        if tarea != "": # Comprueba si la tarea no está vacía
+            if categoria in categorias: # Agrega la tarea como un diccionario con dos claves (tarea: El texto de la tarea / completa: Estado de la tarea (incompleta al principio))
+                categorias[categoria].append({"tarea": tarea, "completa": False})
+
+                # Llama a funciones para actualizar las barras de progreso y la lista de tareas
+                actualizar_barras()
+                actualizar_tareas()
+
+    # Función para editar una tarea
+    def editar_tarea(indice, categoria): 
+        tarea_actual = categorias[categoria][indice]["tarea"]
+        
+        def guardar_cambio(e):
+            nueva_tarea = campo_edicion.value.strip() 
+            if nueva_tarea:
+                categorias[categoria][indice]["tarea"] = nueva_tarea 
+                actualizar_tareas() # Cuando el usuario guarda los cambios, actualiza la tarea en la lista correspondiente
+                cerrar_dialogo()
+
+        campo_edicion = ft.TextField(value=tarea_actual) # Permite modificar el texto de una tarea específica
+        dialogo_editar = ft.AlertDialog(
+            title=ft.Text("Editar Tarea"), 
+            content=campo_edicion, # Muestra un cuadro de diálogo con un campo de texto editable
+            actions=[ 
+                ft.TextButton("Cancelar", on_click=lambda e: cerrar_dialogo()),
+                ft.TextButton("Guardar", on_click=guardar_cambio),
+            ],
+        )
+        pagina.overlay.append(dialogo_editar)
+        dialogo_editar.open = True
+        pagina.update() 
+
+    # Función para eliminar una tarea: Elimina una tarea de la lista
+    def eliminar_tarea(indice, categoria):
+        categorias[categoria].pop(indice) # Usa el índice para localizar la tarea en la categoría y eliminarla
+
+        #Actualiza las barras de progreso y las tareas visibles
+        actualizar_barras()
+        actualizar_tareas()
+
+    # Función para cerrar el cuadro de diálogo
+    def cerrar_dialogo():
+        for control in pagina.overlay:
+            if isinstance(control, ft.AlertDialog):
+                control.open = False
+        pagina.update()
+
+    # Función para marcar tarea como completa/incompleta: Cambia el estado de una tarea
+    def marcar_tarea(indice, categoria):
+        tarea_completa = categorias[categoria][indice]["completa"]
+        categorias[categoria][indice]["completa"] = not tarea_completa # Si la tarea está incompleta, la marca como completada, y viceversa
+        
+        # Llama a las funciones de actualización
+        actualizar_barras()
+        actualizar_tareas()
+
+    # Actualiza las barras de progreso de acuerdo con las tareas: Calcula y actualiza el progreso de cada categoría
+    def actualizar_barras():
+        for i, categoria in enumerate(["Estudio", "Trabajo", "Hogar"]):
+            progreso = (
+
+                # Divide las tareas completadas por el total de tareas
+                sum(1 for tarea in categorias[categoria] if tarea["completa"]) # sum: Cuenta cuántas tareas están completas ("completa": True)
+                / len(categorias[categoria]) # División: Divide las tareas completas entre el total de tareas para calcular el progreso
+                if categorias[categoria]
+                else 0 # Si una categoría no tiene tareas, el progreso se establece en 0 para evitar divisiones por cero
+            )
+            contenedor_barras.controls[i].content.controls[1].value = progreso # Actualiza los valores de las barras de progreso visibles
+        pagina.update()
+
+    # Función para actualizar la lista de tareas: Muestra todas las tareas de la categoría seleccionada
+    def actualizar_tareas():
+        contenedor_tareas.content = ft.ListView(
+            controls=[
+                # Título con la categoría seleccionada
+                ft.Container(
+                    padding=ft.padding.all(8),
+                    content=ft.Text(f"Tareas de {categoria_seleccionada}", 
+                        size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE,
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                ),
+                # Listado de tareas dentro del contenedor
+                *[
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.START,
+                        controls=[
+                            ft.Checkbox( # Checkbox: Para marcarla como completa
+                                value=tarea["completa"],
+                                on_change=lambda e, idx=indice: marcar_tarea(idx, categoria_seleccionada),
+                            ),
+                            ft.Text(
+                                tarea["tarea"],
+                                style=ft.TextStyle(
+                                    decoration=ft.TextDecoration.LINE_THROUGH if tarea["completa"] else None
+                                ),
+                            ),
+
+                            # Botones de editar y eliminar
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT,
+                                icon_color="#eb06ff",  # Color del icono de editar
+                                on_click=lambda e, idx=indice: editar_tarea(idx, categoria_seleccionada),
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE,
+                                icon_color="#eb06ff",  # Color del icono de eliminar
+                                on_click=lambda e, idx=indice: eliminar_tarea(idx, categoria_seleccionada),
+                            ),
+                        ],
                     )
-                )
+                    for indice, tarea in enumerate(categorias[categoria_seleccionada])
+                ],
+            ],
+            auto_scroll=True,
+        )
+        pagina.update()
+
+    # Función para validar el formulario de agregar tarea: Verifica si los datos ingresados por el usuario son válidos
+    def validar_formulario(e):
+        if categoria_seleccionada not in categorias.keys(): # Comprueba que se haya seleccionado una categoría válida
+            mostrar_alerta("Por favor selecciona una categoría válida: Estudio, Trabajo o Hogar.")
+        elif not campo_tarea.value.strip(): # Verifica que el campo de texto de la tarea no esté vacío
+            mostrar_alerta("Por favor ingresa una tarea válida.")
+        else: # Si los datos son correctos, llama a la función para agregar la tarea
+            agregar_tarea(categoria_seleccionada, campo_tarea.value.strip())
+            campo_tarea.value = ""
+            pagina.update()
+
+    # Función para mostrar alertas
+    def mostrar_alerta(mensaje):
+        alerta = ft.AlertDialog( # Muestra un mensaje emergente si ocurre un error (por ejemplo, datos inválidos)
+            title=ft.Text("Error"),
+            content=ft.Text(mensaje),
+            actions=[ft.TextButton("OK", on_click=lambda e: cerrar_alerta(alerta))],
+        )
+        pagina.overlay.append(alerta)
+        alerta.open = True
+        pagina.update()
+
+    # Función para cerrar alertas
+    def cerrar_alerta(alerta):
+        alerta.open = False
+        pagina.update()
+
+    # Contenedor de las barras de progreso
+    contenedor_barras = ft.Row( # Define una fila de barras de progreso, una para cada categoría
+        alignment=ft.MainAxisAlignment.CENTER,  # Centra los contenedores de barras de progreso
+        controls=[ # Cada barra tiene un diseño y color específico
+            ft.Container(
+                width=100,
+                height=110,
+                bgcolor="#24032E",
+                border_radius=15,
+                padding=ft.padding.all(10),
+                content=ft.Column(
+                    controls=[
+                        ft.Text("Estudio", color=ft.Colors.WHITE, size=12),
+                        ft.ProgressBar(value=0.0, color="#FFEC9E"),
+                    ]
+                ),
+            ),
+            ft.Container(
+                width=100,
+                height=110,
+                bgcolor="#3A014C",
+                border_radius=10,
+                padding=ft.padding.all(10),
+                content=ft.Column(
+                    controls=[
+                        ft.Text("Trabajo", color=ft.Colors.WHITE, size=12),
+                        ft.ProgressBar(value=0.0, color="#FFBB70"),
+                    ]
+                ),
+            ),
+            ft.Container(
+                width=100,
+                height=110,
+                bgcolor="#55036F",
+                border_radius=10,
+                padding=ft.padding.all(10),
+                content=ft.Column(
+                    controls=[
+                        ft.Text("Hogar", color=ft.Colors.WHITE, size=12),
+                        ft.ProgressBar(value=0.0, color="#ED9455"),
+                    ]
+                ),
             ),
         ],
-    ),
-)
-    ]
-  )
-
-
-    #Función de encogimiento/reducción.
-    def shrink(e):
-        page_2.controls[0].width = 120 #Se selecciona al contenedor que sería el primer elemento de la lista porque es el que tiene peso.
-        page_2.controls[0].scale = transform.Scale(0.8, alignment=alignment.center_right) #También se puede escalar de esta manera.
-        page_2.controls[0].border_radius=border_radius.only( #Estilos que tendrá la página 2 al encogerse.
-            top_left=35,
-            top_right=0,
-            bottom_left=35,
-            bottom_right=0
-        )
-        page_2.update() #Al actualizar se reduce la página.
-
-    #Función de restauración.
-    def restore(e):
-        page_2.controls[0].width = 400 #Se vuelve a poner el valor inicial del ancho de contenedor que era 400.
-        page_2.controls[0].border_radius=35 #Para que el borde se mantenga redondeado.
-        page_2.controls[0].scale = transform.Scale(1, alignment=alignment.center_right) #También se restaura la escala inicial que era 1.
-        page_2.update() #Al actualizar se restaura la página.
-
-    #Variable que será para las tarjetas de categoria.
-    categories_card = Row( #Serán las tarjetas horizontales que se deslizan.
-        scroll='auto' #Para que se deslice la tarjeta de categoría de manera automática.
+        spacing=10,
     )
-    categories = ['Business', 'Family', 'Friends']
-    for i, category in enumerate(categories): #Se realiza un ciclo por cada categoría para rellenar la barra de progreso.
-        categories_card.controls.append( #Se pone así porque no puede agregar como cadena.
-            Container( #Valores que tendrá el contenedor deslizante.
-                border_radius=20, #Intensidad del borde redondeado.
-                bgcolor=BG, #Color de fondo de las tarjetas deslizantes.
-                width=170, #Ancho de cada tarjeta.
-                height=110, #Altura de cada tarjeta.
-                padding=15, #Espacio dentro de cada tarjeta.
-                content=Column(
-                    controls=[ #Donde se debe especificar los parámetros. Es decir, indicar qué elemento contendrá la tarjeta.
-                        Text('40 Tasks'),
-                        Text(category),
-                        Container( #La barra de progreso debe ir dentro de un contenedor.
-                            #Valores de la barra de progreso.
-                            width=160,
-                            height=5,
-                            bgcolor='white12', #Color de la barra de progreso
-                            border_radius=20,
-                            padding=padding.only(right=i*30), #Esto especifica que tan completo debe estar la barra de progreso. Se multiplica con i porque deberá hacer un ciclo.
-                            content=Container( #Se crea otro contenedor para rellenar la barra de progreso.
-                                bgcolor=PINK #Color del relleno de la barra de progreso.
-                            )
-                        )
-                    ]
-                )
+
+    # Variables para almacenar elementos dinámicos
+    global campo_tarea, contenedor_tareas, categoria_seleccionada
+    campo_tarea = None
+    contenedor_tareas = None
+    categoria_seleccionada = "Estudio"
+
+    # Función para actualizar la categoría seleccionada: Actualiza la categoría seleccionada y reordena la lista de tareas
+    def actualizar_categoria(categoria):
+        global categoria_seleccionada
+        categoria_seleccionada = categoria
+        actualizar_tareas()
+
+    # Crea la interfaz inicial de la aplicación
+    def mostrar_pagina_inicio():
+        pagina.clean() # Limpia todos los elementos actuales de la ventana antes de agregar los nuevos
+
+        # Crea el encabezado con imagen y texto
+        encabezado = ft.Row(
+            alignment=ft.MainAxisAlignment.START,
+            controls=[
+                ft.Container(
+                    padding=ft.padding.only(left=10),  # Padding para separar la imagen del borde
+                    content=ft.Image(src="https://lh3.googleusercontent.com/a/ACg8ocKxfjvXAqQ1oe01pd4RLmqxvJJKpFqUPNzXhL1fFjPlisdhHa0=s96-c", width=30, height=30),  # Aquí va la URL de la imagen
+                ),
+                ft.Text(
+                    "App de tareas",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                    color=ft.Colors.WHITE,
+                    text_align=ft.TextAlign.START,
+                ),
+            ],
+            spacing=10,  # Espaciado entre la imagen y el texto
+        )
+
+        # Iconos de las categorías en la página de inicio con sus respectivos contadores
+        textos_categorias = [
+            ft.Row(
+                alignment=ft.MainAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(
+                        padding=ft.padding.only(left=0),
+                        content=ft.Icon(
+                            name=ft.Icons.BOOK if categoria == "Estudio" else
+                                ft.Icons.BUSINESS_CENTER if categoria == "Trabajo" else
+                                ft.Icons.HOUSE,
+                            color=ft.Colors.WHITE,
+                            size=20,
+                        ),
+                    ),
+                    ft.Text(
+                        f"{categoria}: {len(tareas)} tareas",
+                        size=16,
+                        color=ft.Colors.WHITE,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                ],
+                spacing=10,
+            )
+            for categoria, tareas in categorias.items()
+        ]
+
+        pagina.add(
+            ft.Container(
+                width=400,
+                height=765,
+                bgcolor="#2D033B",
+                border_radius=35,
+                padding=ft.padding.all(20),
+                content=ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        encabezado,  
+                        ft.Container(height=100),  # Espacio entre el encabezado y el resto del contenido
+                        crear_imagen_perfil(),
+                        ft.Text(
+                            "Usuario",
+                            size=27,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.WHITE,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.Container(
+                            padding=ft.padding.only(top=20, bottom=10),
+                            content=ft.Column(
+                                controls=textos_categorias, # Estadísticas de tareas por categoría
+                                spacing=10,
+                            ),
+                        ),
+                        ft.Container(height=240),
+                        ft.Row( # Botón para navegar a la pantalla de tareas
+                            alignment=ft.MainAxisAlignment.END,
+                            controls=[ft.TextButton("Revisar tareas", on_click=lambda _: mostrar_pagina_categorias(), style=ft.ButtonStyle(color="#daa0f2"))],
+                        ),
+                    ],
+                ),
             )
         )
 
 
-    # Función para añadir
-    def agregar_opc(e):
-        if new_task.value != "":  # Verifica que el campo de texto no esté vacío
-            task = opciones_tarea(new_task.value)  # Crea una nueva tarea
-            task_list.controls.append(task)  # Agrega la nueva tarea a `task_list`
-            new_task.value = ""  # Limpia el campo de texto
-            new_task.focus()  # Enfoca nuevamente en el campo de texto
-            task_list.update()  # Actualiza solo `task_list` para mostrar la nueva tarea
-            page_2.update()
 
 
-    #Función editar
-    def guardar_editado(e, task_checkbox, edit_textbox, task_view, edit_view):
-        # Actualiza el texto del checkbox con el nuevo valor
-        task_checkbox.label = edit_textbox.value
-        task_checkbox.update()  # Actualiza la vista del checkbox
-
-        # Cambia la visibilidad entre la vista de tarea y la de edición
-        task_view.visible = True  # Muestra la vista normal de la tarea
-        edit_view.visible = False  # Oculta la vista de edición
-        
-        # Actualiza ambas vistas para que se refleje el cambio
-        task_view.update()
-        edit_view.update()
 
 
-    #Función para eliminar
-    def eliminar_tarea(e, task_card):
-        task_list.controls.remove(task_card)  #Elimina la opción de la lista de tareas
-        page_2.update()
 
-    #Crear opciones de tareas con botones de editar y eliminar
-    def opciones_tarea(task_text):
-        task_checkbox = ft.Checkbox(label=task_text)
+    # Crea la pantalla para gestionar tareas
+    def mostrar_pagina_categorias():
+        global campo_tarea, contenedor_tareas
+        pagina.clean()
 
-        #Vista para mostrar la tarea
-        task_view = ft.Row([
-            task_checkbox,
-            ft.IconButton(icon=ft.Icons.EDIT, on_click=lambda e: mostrar_vista_edit(task_view, edit_view)), #icono de editar
-            ft.IconButton(icon=ft.Icons.DELETE, on_click=lambda e: eliminar_tarea(e, task_card)) #icono de eliminar
-        ])
-
-        #Vista para editar la tarea
-        edit_textbox = ft.TextField(value=task_text)
-        edit_view = ft.Row([
-            edit_textbox,
-            ft.IconButton(icon=ft.Icons.SAVE, on_click=lambda e: guardar_editado(e, task_checkbox, edit_textbox, task_view, edit_view)) #icono de modificar cambios
-        ], visible=False)
-
-        #Alterna las vistas de tarea y edición
-        def mostrar_vista_edit(task_view, edit_view):
-            task_view.visible = False  # Oculta la vista de tarea
-            edit_view.visible = True  # Muestra la vista de edición
-            task_view.update()
-            edit_view.update()
-
-
-        #Contenedor que agrupa ambas vistas (tarea y edición)
-        task_card = ft.Column([task_view, edit_view]) #Coloca en columna las vistas
-        return task_card
-    
-    #Lista donde se agregarán las tareas
-    task_list = ft.Column()
-    
-    new_task = ft.TextField(hint_text="New task", width=300, border_radius=15, border_color="white")
-
-    #Variable que se utilizará para el contenido de la primera página.
-    first_page_contents = Container(
-    content=Column(
-        controls=[
-            Row(
-                alignment='spaceBetween',
-                controls=[
-                    Container(
-                        on_click=lambda e: shrink(e),
-                        content=Icon(Icons.MENU)
-                    ),
-                    Row(
-                        controls=[
-                            Icon(Icons.SEARCH),
-                            Icon(Icons.NOTIFICATIONS_OUTLINED)
-                        ]
-                    )
+        # Campo de texto para agregar nuevas tareas
+        campo_tarea = ft.TextField(label="Nueva tarea", on_submit=validar_formulario, focused_border_color="#C27FDC", label_style=ft.TextStyle(color="#d2b5de"), border_color="#260234")
+        contenedor_tareas = ft.Container(
+            bgcolor="#15011C", # Color del contenedor donde se listan las tareas
+            border_radius=15,
+            width=400,
+            height=200,
+            padding=ft.padding.all(10),
+            content=ft.Column(
+                controls=[ 
+                    ft.Text(f"Tareas de {categoria_seleccionada}", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    ft.ListView(auto_scroll=True)
                 ]
             ),
-            Container(height=20),
-            Text(value='Bienvenido, Usuario!', size=26, weight="bold"),
-            Text(value='CATEGORIAS'),
-            Container(
-                padding=padding.only(top=10, bottom=20),
-                content=categories_card
-            ),
-            Text("TODAY'S TASKS"),
-            Container(
-                bgcolor=BG,
-                height=450,
+        )
+        pagina.add(
+            ft.Container(
                 width=400,
-                border_radius=25,
-                padding=10,
-                content=Column([
-                    new_task,
-                    ft.ElevatedButton("ADD TASK", color= "White", width=200, height=35 , bgcolor=PINK , on_click=agregar_opc),  # Botón para agregar tareas
-                    task_list  # Aquí se muestra la lista de tareas
-                ],
-                    horizontal_alignment=CrossAxisAlignment.CENTER
-                )
-            )
-        ]
-    )
-)
-
-
-    #Se crean variables de las páginas que tendrá la aplicación.
-    page_1 = Container( #Página que aparecerá al achicarse la página principal (page_2).
-        width=400,
-        height=850,
-        bgcolor=BG,
-        border_radius=35,
-        padding=padding.only(left=50, top=60, right=200), #Ubicación que tendrá el ícono '<' dentro del contenedor.
-        
-        content = Column( #Se crea una columna dentro del contenedor porque solo queremos utilizar una columna para la parte de perfil del usuario.
-            controls=[
-                Row(
-                    controls=[
-                        Container( #Se añade un contenedor dentro de la columna para manejar mejor los espacios.
-                    
-                            #Estilos aplicado al ícono '<'.
-                            border_radius=25,
-                            padding=padding.only(top=13, left=13),
-                            height=50,
-                            width=50,
-                            border=border.all(color='white', width=1),
-                            on_click=lambda e: restore(e), #Función que hará al 
-                            content=Text('<') #Será el ícono a utilizar para retroceder.
-                        )
-                    ]
-                ),
-                Container(height=20),
-                circle,
-                Text('Usuario\n', size=32, weight='bold'),
-                Container(height=20),
-                Row( #Bloque del favorito.
-                    controls=[
-                        Icon(Icons.FAVORITE_BORDER_SHARP, color='white60'), #Ícono de corazón y el color asignado a este.
-                        Text('Favorites', size=15, weight=FontWeight.W_300, color='white', font_family='poppins'), #Texto qu acompaña al ícono de corazón.
-                    ]
-                ),
-                Container(height=5), #Espacio entre los bloques.
-                Row( #Bloque de la categoría.
-                    controls=[
-                        Icon(Icons.CARD_TRAVEL, color='white60'), #Ícono de la categoría y el color asignado a este.
-                        Text('Categories', size=15, weight=FontWeight.W_300, color='white', font_family='poppins'), #Texto qu acompaña al ícono de la categoría.
-                    ]
-                ),
-                Container(height=5), #Espacio entre los bloques.
-                Row( #Bloque del análisis.
-                    controls=[
-                        Icon(Icons.CALCULATE_OUTLINED, color='white60'), #Ícono del análisis y el color asignado a este.
-                        Text('Analytics', size=15, weight=FontWeight.W_300, color='white', font_family='poppins'), #Texto qu acompaña al ícono del análisis.
-                    ]
-                ),
-                Image( #Imagen del gráfico.
-                    src="img/1.png",
-                    width=300,
-                    height=200
-                ),
-                Text('Good', color=FG, font_family='poppins'), #Texto pequeño de abajo.
-                Text('Consistency', size=22) #Texto grande de abajo.
-            ]
-        ) 
-    )
-    page_2 = Row( #Se define así porque se utilizarán animaciones y el widget de fila da la alineación que se desea.
-        alignment='end', #Alinea hacia la derecha al achicarse.
-        controls=[ #Se utilizarán parámetros de controles.
-            Container(
-                width=400,
-                height=850,
-                bgcolor=FG,
+                height=765,
+                bgcolor="#810CA8",
                 border_radius=35,
-                animate=Animation(600, AnimationCurve.DECELERATE), #Asigna una animación que durará 600s y tendrá un estilo desacelerado.
-                animate_scale=Animation(400, curve='decelerate'), #Otra manera de animar.
-                padding=padding.only(
-                    top=50, left=20,
-                    right=20, bottom=5 
-                ),
-                content=Column( #Se crea el contenido como una columna para que vayan los widgets horizontales allí.
+                padding=ft.padding.all(20),
+                content=ft.Column(
                     controls=[
-                        first_page_contents
-                    ]
-                )
+                        ft.TextButton("Regresar a Inicio", on_click=lambda _: mostrar_pagina_inicio(), style=ft.ButtonStyle(color="#f5ddff")),
+                        ft.Container(height=30),
+                        ft.Text("Tareas", size=28, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                        ft.Dropdown( # Desplegable para seleccionar una categoría
+                            label="Categoría",
+                            focused_border_color="#C27FDC",
+                            label_style=ft.TextStyle(color="#d2b5de"),
+                            border_color="#260234",
+                            options=[ft.dropdown.Option(c) for c in categorias.keys()],
+                            value=categoria_seleccionada,
+                            on_change=lambda e: actualizar_categoria(e.control.value),
+                        ),
+                        campo_tarea,
+                        ft.ElevatedButton("AGREGAR", 
+                                          on_click=validar_formulario, 
+                                          width=400, height=50, 
+                                          bgcolor='#bf77da', 
+                                          color='white',  
+                                          style=ft.ButtonStyle(  # Estilos del borde para el botón
+                                            side=ft.BorderSide(color="#66048C", width=1)
+                                            )
+                                        ),
+                        ft.Container(height=30),
+                        ft.Text("Categorías", color=ft.Colors.WHITE, size=18),
+                        contenedor_barras,
+                        contenedor_tareas, # Lista de tareas con opciones de editar, eliminar y marcar como completa
+                    ],
+                ),
             )
-        ]
-    )
-
-    container = Container( #Se crea un contenedor para luego agregar dentro de la página.
-        #Se establecen los valores que tendrá el contenedor (ancho, altura y color de fondo).
-        width=400, #Ancho
-        height=815, #Altura (850 según el tutorial pero no me entró en la pantalla)
-        bgcolor=BG, #Color de fondo.
-        border_radius=35,
-        content=Stack( #contenido que irá dentro del contenedor y se convertirá en un widget
-            #Widget de pila que contendrá muchos widgets más.
-            controls=[ #Al contenido de la pila de widgets se lo llama controls.
-                page_1,
-                page_2
-            ]
         )
-    )
+        actualizar_tareas()
 
-    #Diccionario de vistas.
-    pages = {
-        '/':View( #Página 1: Diccionario /
-            "/", #Cuando se llame a la página de esta manera...
-            [   #Tendrá que hacer todo lo que está en este bloque []
-                container
-            ],
-        ),
-        '/create_task': View( #Página 2: Diccionario /create_task
-            "/create_task", #Cuando se llame a la página de esta manera...
-            [ #Tendrá que hacer todo lo que está en este bloque []
-                
-            ]
-        )
-    }
-    
-    #Se crea la función que cambiará de ruta cuando se presione el botón flotante.
-    def route_change(route):
-        page.views.clear() #Esto hace que se borre la vista actual. Cada que se llame a la función, se volverá a crear una vista nueva.
-        page.views.append( #Se agrega una vista particular.
-            pages[page.route] #Se llama al diccionario de vistas.
-        )
+    mostrar_pagina_inicio()
 
-    page.add(container) #Aquí se agrega el contenedor a la página.
-
-    page.on_route_change = route_change #Hace que cambie la ruta por la que se definió en la variable route_change. Crea la ruta aquí y la activa, una vez hecho esto pasa a la función definida con ese nombre.
-    page.go(page.route) #Es lo que hará que inicie otra página.
-
-ft.app(target=main, assets_dir='img')
+ft.app(target=principal) # Inicia la aplicación ejecutando la función principal
