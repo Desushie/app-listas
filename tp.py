@@ -1,6 +1,7 @@
 from flet import * #Luego de haber instalado el módulo Flet, se importa aquí. Esta importación permite utilizar todos sus recursos (*).
 import flet as ft #Importa de Flet...
 
+
 #Comando para ejecutar en la terminal y que el proyecto se actualice en tiempo real: flet -r app.py
 
 #Función principal que abordará la página.
@@ -26,34 +27,40 @@ def main(page: Page): #Función llamada 'main' con parámetro de tipo 'Page' que
         border_radius=50,
         bgcolor='white12'
         ),
-      Container(
-                  gradient=SweepGradient(
-                      center=alignment.center,
-                      start_angle=0.0,
-                      end_angle=3,
-                      stops=[0.5,0.5],
-                  colors=['#00000000', PINK],
-                  ),
-                  width=100,
-                  height=100,
-                  border_radius=50,
-                  content=Row(alignment='center',
-                      controls=[
-                        Container(padding=padding.all(5),
-                          bgcolor=BG,
-                          width=90,height=90,
-                          border_radius=50,
-                          content=Container(bgcolor=FG,
-                            height=80,width=80,
-                            border_radius=40,
-                          content=CircleAvatar(opacity=0.8,
-                foreground_image_url="https://picsum.photos/200/300")
-                          )
-                          )
-                      ],
-                  ),
-              ),
-      
+Container(
+    gradient=SweepGradient(
+        center=alignment.center,
+        start_angle=0.0,
+        end_angle=3,
+        stops=[0.5, 0.5],
+        colors=['#00000000', PINK],
+    ),
+    width=100,
+    height=100,
+    border_radius=50,
+    content=Row(
+        alignment='center',
+        controls=[
+            Container(
+                padding=padding.all(5),
+                bgcolor=BG,
+                width=90,
+                height=90,
+                border_radius=50,
+                content=Container(
+                    bgcolor=FG,
+                    height=80,
+                    width=80,
+                    border_radius=40,
+                    content=CircleAvatar(
+                        opacity=0.8,
+                        foreground_image_src="https://picsum.photos/200/300"
+                    )
+                )
+            ),
+        ],
+    ),
+)
     ]
   )
 
@@ -149,15 +156,15 @@ def main(page: Page): #Función llamada 'main' con parámetro de tipo 'Page' que
         #Vista para mostrar la tarea
         task_view = ft.Row([
             task_checkbox,
-            ft.IconButton(icon=ft.icons.EDIT, on_click=lambda e: mostrar_vista_edit(task_view, edit_view)), #icono de editar
-            ft.IconButton(icon=ft.icons.DELETE, on_click=lambda e: eliminar_tarea(e, task_card)) #icono de eliminar
+            ft.IconButton(icon=ft.Icons.EDIT, on_click=lambda e: mostrar_vista_edit(task_view, edit_view)), #icono de editar
+            ft.IconButton(icon=ft.Icons.DELETE, on_click=lambda e: eliminar_tarea(e, task_card)) #icono de eliminar
         ])
 
         #Vista para editar la tarea
         edit_textbox = ft.TextField(value=task_text)
         edit_view = ft.Row([
             edit_textbox,
-            ft.IconButton(icon=ft.icons.SAVE, on_click=lambda e: guardar_editado(e, task_checkbox, edit_textbox, task_view, edit_view)) #icono de modificar cambios
+            ft.IconButton(icon=ft.Icons.SAVE, on_click=lambda e: guardar_editado(e, task_checkbox, edit_textbox, task_view, edit_view)) #icono de modificar cambios
         ], visible=False)
 
         #Alterna las vistas de tarea y edición
@@ -186,19 +193,19 @@ def main(page: Page): #Función llamada 'main' con parámetro de tipo 'Page' que
                 controls=[
                     Container(
                         on_click=lambda e: shrink(e),
-                        content=Icon(icons.MENU)
+                        content=Icon(Icons.MENU)
                     ),
                     Row(
                         controls=[
-                            Icon(icons.SEARCH),
-                            Icon(icons.NOTIFICATIONS_OUTLINED)
+                            Icon(Icons.SEARCH),
+                            Icon(Icons.NOTIFICATIONS_OUTLINED)
                         ]
                     )
                 ]
             ),
             Container(height=20),
-            Text(value='Welcome, Erika!', size=26, weight="bold"),
-            Text(value='CATEGORIES'),
+            Text(value='Bienvenido, Usuario!', size=26, weight="bold"),
+            Text(value='CATEGORIAS'),
             Container(
                 padding=padding.only(top=10, bottom=20),
                 content=categories_card
@@ -250,25 +257,25 @@ def main(page: Page): #Función llamada 'main' con parámetro de tipo 'Page' que
                 ),
                 Container(height=20),
                 circle,
-                Text('Erika\nBenítez', size=32, weight='bold'),
+                Text('Usuario\n', size=32, weight='bold'),
                 Container(height=20),
                 Row( #Bloque del favorito.
                     controls=[
-                        Icon(icons.FAVORITE_BORDER_SHARP, color='white60'), #Ícono de corazón y el color asignado a este.
+                        Icon(Icons.FAVORITE_BORDER_SHARP, color='white60'), #Ícono de corazón y el color asignado a este.
                         Text('Favorites', size=15, weight=FontWeight.W_300, color='white', font_family='poppins'), #Texto qu acompaña al ícono de corazón.
                     ]
                 ),
                 Container(height=5), #Espacio entre los bloques.
                 Row( #Bloque de la categoría.
                     controls=[
-                        Icon(icons.CARD_TRAVEL, color='white60'), #Ícono de la categoría y el color asignado a este.
+                        Icon(Icons.CARD_TRAVEL, color='white60'), #Ícono de la categoría y el color asignado a este.
                         Text('Categories', size=15, weight=FontWeight.W_300, color='white', font_family='poppins'), #Texto qu acompaña al ícono de la categoría.
                     ]
                 ),
                 Container(height=5), #Espacio entre los bloques.
                 Row( #Bloque del análisis.
                     controls=[
-                        Icon(icons.CALCULATE_OUTLINED, color='white60'), #Ícono del análisis y el color asignado a este.
+                        Icon(Icons.CALCULATE_OUTLINED, color='white60'), #Ícono del análisis y el color asignado a este.
                         Text('Analytics', size=15, weight=FontWeight.W_300, color='white', font_family='poppins'), #Texto qu acompaña al ícono del análisis.
                     ]
                 ),
@@ -290,8 +297,8 @@ def main(page: Page): #Función llamada 'main' con parámetro de tipo 'Page' que
                 height=850,
                 bgcolor=FG,
                 border_radius=35,
-                animate=animation.Animation(600, AnimationCurve.DECELERATE), #Asigna una animación que durará 600s y tendrá un estilo desacelerado.
-                animate_scale=animation.Animation(400, curve='decelerate'), #Otra manera de animar.
+                animate=Animation(600, AnimationCurve.DECELERATE), #Asigna una animación que durará 600s y tendrá un estilo desacelerado.
+                animate_scale=Animation(400, curve='decelerate'), #Otra manera de animar.
                 padding=padding.only(
                     top=50, left=20,
                     right=20, bottom=5 
