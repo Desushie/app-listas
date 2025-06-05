@@ -35,8 +35,8 @@ El ComboBox permite al usuario seleccionar una categoría específica entre las 
 Representan el porcentaje de tareas completadas para cada categoría.<br/>
 − Se usa un Container que contiene un Row (fila) para alinear el nombre de la categoría y la barra de progreso.<br/>
 − La barra de progreso (ft.ProgressBar) tiene un valor inicial de 0, y su tamaño está definido por width=200.<br/>
-− Actualización dinámica: La función actualizar_barras calcula el progreso de cada categoría y actualiza el valor de la barra:<br/>
-− Cálculo del progreso: Divide las tareas completadas entre el total de tareas en la categoría. Si no hay tareas, el progreso es 0.
+**− Actualización dinámica:** La función actualizar_barras calcula el progreso de cada categoría y actualiza el valor de la barra:<br/>
+**− Cálculo del progreso:** Divide las tareas completadas entre el total de tareas en la categoría. Si no hay tareas, el progreso es 0.
 
 **4. Las tareas se listaron dependiendo de la categoría:** (Erika Benítez)<br/>
 Muestra las tareas asociadas a una categoría en una lista interactiva.<br/>
